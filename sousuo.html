@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vue Search</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/element-ui/lib/theme-chalk/index.css"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <el-input v-model="searchText" placeholder="Search"></el-input>
+      <el-button @click="searchNext"
+        ><i class="el-icon-arrow-down"></i
+      ></el-button>
+      <el-button @click="searchPrevious"
+        ><i class="el-icon-arrow-up"></i
+      ></el-button>
+      <div v-if="matchingIndices.length > 0">
+        <ul>
+          <li v-for="(text, index) in matchingIndices" :key="index">
+            {{ text }}
+          </li>
+        </ul>
+      </div>
+      <div v-else>
+        No matches found.
+      </div>
+    </div>
+    <script src="./vue.min.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="https://unpkg.com/lodash/lodash.js"></script>
+  </body>
+</html>
+<script>
+  new Vue({
+    el: "#app",
+    data: {
+      searchText: "",
+      textData:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce tempus ex vitae dignissim vulputate. Nulla fringilla bibendum diam. Donec fermentum, libero sed porttitor posuere, nisl mauris fringilla nulla, vitae facilisis lorem leo sit amet diam. Vestibulum a porttitor est. Duis id velit eu massa accumsan varius nec ut nulla. Quisque at risus ullamcorper, ultricies metus vel, viverra purus. Nullam congue dapibus lectus, a elementum elit venenatis eu. Donec et ex eleifend, volutpat ligula ac, cursus velit. Phasellus malesuada aliquet nisl, at finibus metus rhoncus volutpat. Integer pretium ornare enim id dapibus. Nulla facilisi. Curabitur finibus eros augue, id tincidunt turpis semper vitae. Suspendisse potenti. Mauris at finibus eros. Praesent efficitur vestibulum dolor, non placerat nulla consectetur vitae.",
+      matchingIndices: [],
+    },
+    methods: {
+      searchNext() {
+        this.findMatchingIndices();
+        const currentIndex = this.matchingIndices.findIndex(
+          (idx) => idx > this.currentMatchIndex
+        );
+        if (currentIndex > -1) {
+          this.currentMatchIndex = this.matchingIndices[currentIndex];
+        } else {
+          this.currentMatchIndex = this.matchingIndices[0];
+        }
+      },
+      searchPrevious() {
+        this.findMatchingIndices();
+        const currentIndex = this.matchingIndices
+          .reverse()
+          .findIndex((idx) => idx < this.currentMatchIndex);
+        if (currentIndex > -1) {
+          this.currentMatchIndex = this.matchingIndices.reverse()[currentIndex];
+        } else {
+          this.currentMatchIndex = this.matchingIndices.reverse()[0];
+        }
+      },
+      findMatchingIndices() {
+        const regex = new RegExp(this.searchText, "gi");
+        this.matchingIndices = [];
+        let match;
+        while ((match = regex.exec(this.textData)) !== null) {
+          this.matchingIndices.push(match.index);
+        }
+      },
+    },
+    mounted() {
+      this.findMatchingIndices();
+      this.currentMatchIndex = this.matchingIndices[0];
+    },
+  });
+</script>

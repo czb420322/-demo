@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div class="css">
+      <div>
+        <span class="close-x"></span>
+        <p>基本用法</p>
+      </div>
+      <div>
+        <span class="close-x rotate-infinite"></span>
+        <p>持续旋转</p>
+      </div>
+      <div>
+        <span class="close-x rotate-one"></span>
+        <p>旋转一次</p>
+      </div>
+      <div>
+        <span class="close-x rotate-hover"></span>
+        <p>hover转1次</p>
+      </div>
+      <div>
+        <span class="close-x rotate-active"></span>
+        <p>选中旋转</p>
+      </div>
+    </div>
+  </body>
+  <style>
+    /* @closeXSize: 20px; // 大小/尺寸
+    @closeXLine: 2px; // 线条宽度
+     */
+     .close-x {
+      position: relative;
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+
+      &::before,
+      &::after {
+        position: absolute;
+        left: 50%;
+        width: 2px;
+        height: 100%;
+        margin-left: (2px / -2);
+        content: "";
+        transform: rotate(-45deg);
+        background: #000;
+      }
+
+      &::after {
+        transform: rotate(45deg);
+      }
+    }
+
+    /* // 持续旋转 */
+    .rotate-infinite {
+      animation: rotating 0.3s infinite linear;
+    }
+
+    /* // 旋转一次后停止 */
+    .rotate-one {
+      animation: rotating 0.3s linear;
+    }
+
+    /* // hover 后旋转 */
+    .rotate-hover:hover {
+      /* .rotate-one(); */
+    }
+
+    .rotate-active:active {
+      /* .rotate-infinite(); */
+    }
+
+    /* // 定义旋转动画 */
+    @keyframes rotating {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    body {
+      text-align: center;
+    }
+
+    .css > div {
+      display: inline-block;
+      width: 100px;
+      margin-top: 50px;
+    }
+
+    .js {
+      margin-top: 100px;
+    }
+  </style>
+</html>

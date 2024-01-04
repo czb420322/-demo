@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="./node_modules/exceljs/dist/exceljs.min.js"></script>
+</head>
+
+<body>
+    <div>
+        <div>
+            <input id='input' />
+            <button type="button">确定</button>
+        </div>
+        <button type="button" onclick="exportExcel()">导出</button>
+    </div>
+    <script type="text/javascript">
+        const exportExcel = async () => {
+            // 接口返回的原始数据
+            const requestData = [
+                { WorkStation: "DIFF_UPOLY", Wip: 4, RunWip: null, WaitWip: null, HlodWip: 4, StageWIP: null, WithoutHoldRunRatio: null, WithoutStageRunRatio: 0, Hour1: "10-10 08"},
+                { WorkStation: "DIFF_UPOLY", Wip: 9, RunWip: 10, WaitWip: null, HlodWip: 4, StageWIP: 3, WithoutHoldRunRatio: null, WithoutStageRunRatio: 0.5, Hour1: "10-10 09"},
+                { WorkStation: "DIFF_UPOLY", Wip: 2, RunWip: null, WaitWip: 2, HlodWip: 4, StageWIP: 3, WithoutHoldRunRatio: null, WithoutStageRunRatio: 0, Hour1: "10-10 07"},
+                { WorkStation: "PERSON_USER", Wip: 2, RunWip: null, WaitWip: 2, HlodWip: 4, StageWIP: 3, WithoutHoldRunRatio: null, WithoutStageRunRatio: 0, Hour1: "10-10 09"},
+                { WorkStation: "PERSON_USER", Wip: 6, RunWip: null, WaitWip: 2, HlodWip: 4, StageWIP: 3, WithoutHoldRunRatio: null, WithoutStageRunRatio: 0, Hour1: "10-10 08"},
+                { WorkStation: "PERSON_USER", Wip: 2, RunWip: null, WaitWip: 2, HlodWip: 4, StageWIP: 3, WithoutHoldRunRatio: null, WithoutStageRunRatio: 0, Hour1: "10-10 07"},
+                { WorkStation: "NAME_SHENZHEN", Wip: 2, RunWip: null, WaitWip: 52, HlodWip: 4, StageWIP: 3, WithoutHoldRunRatio: null, WithoutStageRunRatio: 0, Hour1: "10-10 07"},
+                { WorkStation: "NAME_SHENZHEN", Wip: 9, RunWip: null, WaitWip: 2, HlodWip: 3, StageWIP: 2, WithoutHoldRunRatio: null, WithoutStageRunRatio: 0, Hour1: "10-10 08"},
+                { WorkStation: "NAME_SHENZHEN", Wip: 5, RunWip: 7, WaitWip: 2, HlodWip: 4, StageWIP: 3, WithoutHoldRunRatio: null, WithoutStageRunRatio:9, Hour1: "10-10 09"},
+            ]
+            // 类型数据列表，固定值
+            const typeNameList = [
+                {'TotaI WIP': 'Wip'}, 
+                {'Run WIP': 'RunWip'},
+                {'Wait WIP': 'WaitWip'},
+                {'Hlod WIP': 'HlodWip'},
+                {'Stage WIP': 'StageWIP'},
+                // {'Run%': ''},
+                {'Run% w/o hold': 'WithoutHoldRunRatio'},
+                {'Run% wo hold lmpact by wait': 'WithoutStageRunRatio'}
+            ]
+            
+            // 需要的结果数据列表
+            const resultList = []
+            // 获取工作区间数据名称列表
+            const workStationNames = []
+            requestData.forEach(item => {
+                if (!workStationNames.includes(item.WorkStation)) {
+                    workStationNames.push(item.WorkStation)
+                }
+            })
+            workStationNames.forEach(workStationName => {
+                // 获取类型对应时间数据列表
+                const filterData = requestData.filter(data => data.WorkStation === workStationName)
+                
+                // 对过滤出来的数组按照时间大小进行升序
+                filterData.sort((a,b)=>{
+                    return a.Hour1.split(' ')[1] -b.Hour1.split(' ')[1]
+                })
+                const typeDataList = []
+                typeNameList.forEach(typeName => {
+                    const contents = filterData.map(fd => {
+                        return fd[Object.values(typeName)[0]]
+                    })
+                    typeDataList.push({name: Object.keys(typeName)[0], contents})
+                })
+                // 类型数据列表
+               
+                const resultObj = {
+                    areaName: workStationName,
+                    typeDataList
+                }
+                resultList.push(resultObj)
+                
+            })
+            // console.log('resultList', resultList)
+
+            // // 转换后的数据
+            // const originData = [
+            //     {
+            //         areaName: '区域A',
+            //         typeDataList: [
+            //             {
+            //                 name: '区域A-类型1',
+            //                 contents: ['区域A-类型1-数据1', '区域A-类型1-数据2', '区域A-类型1-数据3', '区域A-类型1-数据4']
+            //             },
+            //             {
+            //                 name: '区域A-类型2',
+            //                 contents: ['区域A-类型2-数据1', '区域A-类型2-数据2', '区域A-类型2-数据3', '区域A-类型2-数据4']
+            //             },
+            //             {
+            //                 name: '区域A-类型3',
+            //                 contents: ['区域A-类型3-数据1', '区域A-类型3-数据2', '区域A-类型3-数据3', '区域A-类型3-数据4']
+            //             }
+            //         ]
+            //     },
+            //     {
+            //         areaName: '区域B',
+            //         typeDataList: [
+            //             {
+            //                 name: '区域B-类型1',
+            //                 contents: ['区域B-类型1-数据1', '区域B-类型1-数据2', '区域B-类型1-数据3', '区域B-类型1-数据4']
+            //             },
+            //             {
+            //                 name: '区域B-类型2',
+            //                 contents: ['区域B-类型2-数据1', '区域B-类型2-数据2', '区域B-类型2-数据3', '区域B-类型2-数据4']
+            //             },
+            //             {
+            //                 name: '区域B-类型3',
+            //                 contents: ['区域B-类型3-数据1', '区域B-类型3-数据2', '区域B-类型3-数据3', '区域B-类型3-数据4']
+            //             }
+            //         ]
+            //     },
+            //     {
+            //         areaName: '区域C',
+            //         typeDataList: [
+            //             {
+            //                 name: '区域C-类型1',
+            //                 contents: ['区域C-类型1-数据1', '区域C-类型1-数据2', '区域C-类型1-数据3', '区域C-类型1-数据4']
+            //             },
+            //             {
+            //                 name: '区域C-类型2',
+            //                 contents: ['区域C-类型2-数据1', '区域C-类型2-数据2', '区域C-类型2-数据3', '区域C-类型2-数据4']
+            //             },
+            //             {
+            //                 name: '区域C-类型3',
+            //                 contents: ['区域C-类型3-数据1', '区域C-类型3-数据2', '区域C-类型3-数据3', '区域C-类型3-数据4']
+            //             }
+            //         ]
+            //     }
+            // ]
+
+            // 初始化一个sheet
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('表格1')
+            // 设置表头
+            worksheet.getCell('A1').value = '区域'
+            worksheet.getCell('B1').value = '类型'
+            // 填充第一行的数据
+            for (let i = 0; i < 3; i++) {
+                const startTime = new Date();
+                startTime.setHours(7 + i);
+                const endTime = new Date(startTime.getTime() + 3600 * 1000);
+                worksheet.getCell(1, i + 3).value = `${startTime.toLocaleTimeString()} - ${endTime.toLocaleTimeString()}`;
+            }
+
+            // 开始行数
+            let startRowNum = 2
+            // 结束行数
+            let endRowNum = 0
+            resultList.forEach(origin => {
+                endRowNum = startRowNum + origin.typeDataList.length - 1
+                // 添加区域数据
+                worksheet.getCell(`A${startRowNum}`).value = origin.areaName
+                origin.typeDataList.forEach((typeData, i) => {
+                    // 添加类型数据
+                    worksheet.getCell(`B${i + startRowNum}`).value = typeData.name
+                    // 添加内容数据
+                    typeData.contents.forEach((content, j) => {
+                        worksheet.getCell(i + startRowNum, 3 + j).value = content
+                    })
+                })
+                // 合并第一列的单元格
+                worksheet.mergeCells(`A${startRowNum}:A${endRowNum}`)
+                startRowNum += origin.typeDataList.length
+            })
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+            // Create a download link for the Blob
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'table_data.xlsx';
+            link.click();
+        }
+    </script>
+</body>
+
+</html>

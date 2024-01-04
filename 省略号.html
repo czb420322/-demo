@@ -1,0 +1,97 @@
+<div class="text">网络已断开，正在尝试重新连接<span class="dot">...</span></div>
+<style>
+  .dot {
+    font-family: simsun; /*固定字体避免设置的宽度无效*/
+    animation: dot 3s infinite step-start;
+    display: inline-block;
+    width: 1.5em;
+    vertical-align: bottom; /*始终让省略号在文字的下面*/
+    overflow: hidden;
+  }
+  @keyframes dot {
+    /*动态改变显示宽度, 但始终让总占据空间不变, 避免抖动*/
+    0% {
+      width: 0;
+      margin-right: 1.5em;
+    }
+    33% {
+      width: 0.5em;
+      margin-right: 1em;
+    }
+    66% {
+      width: 1em;
+      margin-right: 0.5em;
+    }
+    100% {
+      width: 1.5em;
+      margin-right: 0;
+    }
+  }
+</style>
+<script>
+  import axios from "axios";
+
+  function request(config) {
+    const instance = axios.create({
+      baseURL: "http://localhost:3000/api",
+      timeout: 10000,
+    });
+
+    // 防抖
+    const debounceTokenCancel = new Map();
+    instance.interceptors.request.use(
+      (config) => {
+        const tokenKey = `${config.method}-${config.url}`;
+        const cancel = debounceTokenCancel.get(tokenKey);
+        if (cancel) {
+          cancel();
+        }
+        return new Promise((resolve) => {
+          const timer = setTimeout(() => {
+            clearTimeout(timer);
+            resolve(config);
+          }, 800);
+          debounceTokenCancel.set(tokenKey, () => {
+            clearTimeout(timer);
+            resolve(new Error("取消请求"));
+          });
+        });
+      },
+      (error) => {
+        console.log(error);
+        return Promise.reject(error);
+      }
+    );
+
+    instance.interceptors.response.use(
+      (response) => {
+        return response;
+      },
+      (error) => {
+        console.log(error);
+        return Promise.reject(error);
+      }
+    );
+
+    // 节流
+    let lastTime = new Date().getTime();
+    instance.interceptors.request.use(
+      (config) => {
+        const nowTime = new Date().getTime();
+        if (nowTime - lastTime < 1000) {
+          return Promise.reject(new Error("节流处理中，稍后再试"));
+        }
+        lastTime = nowTime;
+        return config;
+      },
+      (error) => {
+        console.log(error);
+        return Promise.reject(error);
+      }
+    );
+
+    return instance(config);
+  }
+
+  export default request;
+</script>

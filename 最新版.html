@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>ECharts Gantt Chart Example</title>
+    <script
+      src="https://cdn.bootcdn.net/ajax/libs/echarts/5.0.0/echarts.min.js"
+      integrity="sha512-ZRdjJAYP8Kij8Lkln9uiGj0jIrMDLAALm1ZB2b3VfV9XJ0nR4zbJmHKB42/A4tgMlZS4DTPnSAmcYRoS0dginA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script src="https://unpkg.com/dayjs"></script>
+  </head>
+  <body>
+    <div id="chart" style="width: 800px; height: 600px"></div>
+    <script>
+      /* ======= */
+      var data = [];
+      var categories = ["categoryA", "categoryB", "categoryC"];
+      let currentIndex = 0;
+      let needIndex = 0;
+      var newcolors = ["red", "green", "blue", "yellow"];
+      var types = [
+        { name: "第一批次", color: "#7b9ce1" },
+        { name: "第二批次", color: "#bd6d6c" },
+        { name: "第三批次", color: "#75d874" },
+        { name: "第四批次", color: "#e0bc78" },
+        { name: "第五批次", color: "#dc77dc" },
+        { name: "第六批次", color: "#72b362" },
+      ];
+      /* ======= */
+      var newData = [
+        {
+          flag: 0,
+          TrackInTine: "2023-12-24 07:11:44",
+          TrackOutTime: "2023-12-24 07:45:32",
+          row: 1,
+        },
+        {
+          flag: 1,
+          TrackInTine: "2023-12-24 09:11:44",
+          TrackOutTime: "2023-12-24 09:45:32",
+          row: 1,
+        },
+        {
+          flag: 1,
+          TrackInTine: "2023-12-24 11:11:44",
+          TrackOutTime: "2023-12-24 11:45:32",
+          row: 2,
+        },
+        {
+          flag: 0,
+          TrackInTine: "2023-12-24 14:11:44",
+          TrackOutTime: "2023-12-24 15:45:32",
+          row: 2,
+        },
+        {
+          flag: 1,
+          TrackInTine: "2023-12-24 18:11:44",
+          TrackOutTime: "2023-12-24 19:45:32",
+          row: 3,
+        },
+      ];
+
+      var dataCount = newData.length;
+      var startTime = +new Date();
+      var formatterTime = dayjs(startTime).format("YYYY-MM-DD HH:mm:ss");
+      echarts.util.each(categories, function(category, index) {
+        // 根据后台返回第几行标识的数据进行重组
+        let rowData = newData.filter((origin) => origin.row === index + 1);
+        console.log(rowData, "rowData");
+        rowData &&
+          rowData.forEach((row, i) => {
+            var TrackInTine = dayjs(row.TrackInTine).valueOf();
+            var TrackOutTime = dayjs(row.TrackOutTime).valueOf();
+            var duration = (TrackOutTime - TrackInTine) / 1000;
+            var typeItem = types[i];
+            console.log(typeItem, "typeItem");
+            data.push({
+              name: typeItem.name,
+              value: [index, TrackInTine, TrackOutTime, duration],
+            });
+          });
+      });
+
+      console.log(data);
+      function renderItem(params, api) {
+        let paramsColor = newcolors[0];
+
+        // 第一个flag为0和1均显示第一个的初始颜色，第二个flag为1则显示第二个颜色，为0则显示上一个颜色，后面以此类推
+        let flag = newData[currentIndex]?.flag;
+        if (currentIndex == 0) {
+          paramsColor = newcolors[0];
+        } else {
+          if (flag === 1) {
+            needIndex++;
+          }
+          paramsColor = newcolors[needIndex];
+        }
+
+        currentIndex++;
+        if (currentIndex === newData.length) {
+          currentIndex = 0;
+          needIndex = 0;
+        }
+
+        var categoryIndex = api.value(0);
+        var start = api.coord([api.value(1), categoryIndex]);
+        var end = api.coord([api.value(2), categoryIndex]);
+        // console.log(params,api)
+        var height = api.size([0, 1])[1] * 0.3;
+        var rectShape = echarts.graphic.clipRectByRect(
+          {
+            x: start[0],
+            y: start[1] - height / 2,
+            width: end[0] - start[0],
+            height: height,
+          },
+          {
+            x: params.coordSys.x,
+            y: params.coordSys.y,
+            width: params.coordSys.width,
+            height: params.coordSys.height,
+          }
+        );
+
+        var rectParts = [
+          {
+            x: rectShape.x,
+            y: rectShape.y,
+            width: rectShape.width * 0.1, // Width of the first smaller rectangle
+            height: rectShape.height,
+            style: {
+              fill: paramsColor, // White color
+            },
+          },
+          {
+            x: rectShape.x + rectShape.width * 0.1,
+            y: rectShape.y,
+            width: rectShape.width * 0.6, // Width of the second smaller rectangle
+            height: rectShape.height,
+            style: {
+              fill: paramsColor, // Red color
+            },
+          },
+          {
+            x: rectShape.x + rectShape.width * 0.1,
+            y: rectShape.y + rectShape.height * 0.4,
+            width: rectShape.width * 0.48, // Width of the third smaller rectangle
+            height: rectShape.height * 0.33, // Height of the third smaller rectangle
+            style: {
+              fill: "#fff", // Yellow color
+            },
+          },
+          {
+            x: rectShape.x + rectShape.width * 0.1,
+            y: rectShape.y + rectShape.height * 0.66,
+            width: rectShape.width * 0.6, // Width of the fourth smaller rectangle
+            height: rectShape.height * 0.34, // Height of the fourth smaller rectangle
+            style: {
+              fill: paramsColor, // Blue color
+            },
+          },
+        ];
+        return (
+          rectShape && {
+            type: "group",
+            children: rectParts.map(function(part) {
+              // console.log('part',part)
+              return {
+                type: "rect",
+                shape: part,
+                style: part.style,
+              };
+            }),
+          }
+        );
+      }
+
+      var option = {
+        tooltip: {
+          // formatter: function(params) {
+          //   console.log(params, "params");
+          //   return params.marker + params.name + ": " + params.value[3] + " ms";
+          // },
+          trigger: "item",
+          formatter: function(params) {
+                console.log(params, "params");
+            var data = params.data;
+            var html = "<table>";
+            html += "<tr><th>名字</th><th>数值</th></tr>";
+            for (var i = 0; i < data.value.length; i++) {
+              html +=
+                "<tr><td>" +
+                data.name +
+                "</td><td>" +
+                data.value[i] +
+                "</td></tr>";
+            }
+            html += "</table>";
+            return html;
+          },
+          //   formatter: function(params) {
+          //     console.log(params, "188params");
+
+          //     // params 参数包含了当前 tooltip 数据项的信息
+          //     var customContent =
+          //       "<table><tr><td>" +
+          //       params.marker +
+          //       "</td><td>" +
+          //       params.name +
+          //       "</td><td>" +
+          //       params.value[3] +
+          //       " ms" +
+          //       "</td></tr></table>";
+          //     console.log(customContent, "197***");
+          //     return customContent;
+          //   },
+        },
+        title: {
+          text: "Profile",
+          left: "center",
+        },
+        dataZoom: [
+          {
+            type: "slider",
+            filterMode: "weakFilter",
+            showDataShadow: false,
+            top: 400,
+            height: 10,
+            borderColor: "transparent",
+            backgroundColor: "#e2e2e2",
+            handleIcon:
+              "path://M10.7,11.9H9.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4h1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7v-1.2h6.6z M13.3,22H6.7v-1.2h6.6z M13.3,19.6H6.7v-1.2h6.6z",
+            handleSize: 20,
+            handleStyle: {
+              shadowBlur: 6,
+              shadowOffsetX: 1,
+              shadowOffsetY: 2,
+              shadowColor: "#aaa",
+            },
+            labelFormatter: "",
+          },
+          {
+            type: "inside",
+            filterMode: "weakFilter",
+          },
+        ],
+        grid: {
+          height: 300,
+        },
+        /* 非常重要的一步=== */
+        xAxis: {
+          min: dayjs(newData[0].TrackInTine).valueOf(),
+          scale: true,
+          axisLabel: {
+            formatter: function(val) {
+              return (
+                Math.max(0, val - dayjs(newData[0].TrackInTine).valueOf()) +
+                " ms"
+              );
+            },
+          },
+        },
+        yAxis: {
+          data: [],
+        },
+        series: [
+          {
+            type: "custom",
+            renderItem: renderItem,
+            itemStyle: {
+              normal: {
+                opacity: 0.8,
+              },
+            },
+            encode: {
+              x: [1, 2],
+              y: 0,
+            },
+            data: data,
+          },
+        ],
+      };
+      // console.log(option, "243****");
+      var chart = echarts.init(document.getElementById("chart"));
+
+      chart.setOption(option);
+      document
+        .getElementById("chart")
+        .addEventListener("contextmenu", function(e) {
+          e.preventDefault();
+          // 首先进行判断
+          console.log(document.getElementById("menu"));
+          if (document.getElementById("menu")) return;
+          let menu = document.createElement("div");
+          menu.innerHTML = `<div id='menu'><div >菜单内容</div><ul>
+                        <li>1</li>
+                        <li>2</li>
+                        <li>3</li>
+                        <li>4</li>
+                        <li>5</li>
+                        </ul></div>`;
+          menu.style.position = "absolute";
+          menu.style.left = e.pageX + "px";
+          menu.style.top = e.pageY + "px";
+          menu.style.backgroundColor = "#fff"; // 设置菜单样式
+
+          // 将菜单添加到页面中
+          document.body.appendChild(menu);
+          const fn = function() {
+            console.log(menu);
+            document.body.removeChild(menu);
+            document.removeEventListener("click", fn);
+          };
+          document.addEventListener("click", fn);
+        });
+      chart.getZr().on("contextmenu", function(params) {
+        console.log(params.event, "ddd");
+      });
+    </script>
+  </body>
+</html>
